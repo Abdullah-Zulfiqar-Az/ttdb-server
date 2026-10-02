@@ -1,0 +1,5 @@
+func foo r
+set r 1
+func fee r
+func_end
+func_end

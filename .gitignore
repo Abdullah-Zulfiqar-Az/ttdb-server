@@ -5,4 +5,5 @@ server
 test_stack
 a.out
 test_timeline
+test_validate
 *.o

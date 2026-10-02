@@ -1,0 +1,2 @@
+func foo a
+set a 1
