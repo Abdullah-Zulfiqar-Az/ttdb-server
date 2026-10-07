@@ -6,4 +6,5 @@ test_stack
 a.out
 test_timeline
 test_validate
+test_resolve
 *.o

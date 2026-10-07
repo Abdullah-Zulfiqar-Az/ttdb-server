@@ -21,3 +21,12 @@
 - Tested with 1 valid and 3 invalid text files. All results matched.
 - Encountered and fixed two bugs: wrong whitespace checking conditions in `firstWord()` and `secondWord()`, and the boolean flag 
 not being reset on `func_end`.
+
+
+## 7th OCT 2026
+
+### Pass (0x1): Resolve Program
+- Implemented `writeResolveRecord()`, `readResolveRecord()` and `resolveProgram()`. 
+- Tested with `valid.txt`, `nomain.txt` and `wrongcall.txt`. Results were as expected.
+- Encountered and fixed several bugs, the major one was: Using `ostream` binary filing when the functions expected `FILE * `.
+- Reorganized the repository into folders.

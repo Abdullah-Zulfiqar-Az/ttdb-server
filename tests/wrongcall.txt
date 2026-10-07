@@ -1,0 +1,3 @@
+func main
+call c++ python
+func_end

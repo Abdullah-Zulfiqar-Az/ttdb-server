@@ -87,35 +87,35 @@ public:
 int main()
 {
 Stack<int> s;
-    cout << s.isEmpty() << endl;      // expect 1
+    cout << s.isEmpty() << endl;      
 
     s.push(10);
     s.push(20);
     s.push(30);
-    cout << s.depth() << endl;        // expect 3
-    cout << s.peek() << endl;         // expect 30
+    cout << s.depth() << endl;        
+    cout << s.peek() << endl;         
 
     int arr[5];
     int n = s.snapshot_into(arr, 5);
-    cout << n << ": ";                // expect 3: 30 20 10
+    cout << n << ": ";                
     for (int i = 0; i < n; i++)
     {
         cout << arr[i] << " ";
     }
     cout << endl;
 
-    cout << s.pop() << endl;          // expect 30
-    cout << s.pop() << endl;          // expect 20
-    cout << s.depth() << endl;        // expect 1
+    cout << s.pop() << endl;          
+    cout << s.pop() << endl;          
+    cout << s.depth() << endl;        
 
     s.pop();
-    cout << s.isEmpty() << endl;      // expect 1
+    cout << s.isEmpty() << endl;      
 
     for (int i = 0; i < 70; i++)
     {
         s.push(i);
     }
-    cout << s.depth() << endl;        // expect 64 (limit reached)
+    cout << s.depth() << endl;        
 
     return 0;
 }
