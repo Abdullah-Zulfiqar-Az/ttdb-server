@@ -7,4 +7,6 @@ a.out
 test_timeline
 test_validate
 test_resolve
+test_tokenize
+test_snapshot
 *.o

@@ -30,3 +30,11 @@ not being reset on `func_end`.
 - Tested with `valid.txt`, `nomain.txt` and `wrongcall.txt`. Results were as expected.
 - Encountered and fixed several bugs, the major one was: Using `ostream` binary filing when the functions expected `FILE * `.
 - Reorganized the repository into folders.
+
+
+## 9th OCT 2026
+
+### Pass(0x2) - in progress:
+- Implemented `tokenizeLine()` and `buildSnapshot()`.
+- Tested both in `test_tokenize.cpp` and `test_snapshot.cpp`. Results matched.
+- `executeProgram()` currently in progress.

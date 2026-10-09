@@ -516,14 +516,64 @@ struct Token
 };
 int32_t tokenizeLine(const string &line, Token tokens[], int32_t maxTokens)
 {
-    // first word is always a instruction keyword
-    // instruction set = [func, func_end, call, set, add, sub, mul and div]
-    // next word is identifier like name of a function, variable name
-    // after identifier all are the params/arg, space separated
+    int32_t tokenCount = 0;
+    int32_t pos = 0;
+
+    while(pos < line.length() && tokenCount <  maxTokens) //scanning whole line
+    {
+        while( pos < line.length() && (line[pos] == ' ' || line[pos] == '\t')) //skiping any spaces/tabs
+        {
+            pos++;
+        }
+
+        if(pos >= line.length())
+        {
+            break;
+        }
+
+        string word = "";
+        while(pos < line.length() && line[pos] != ' ' && line[pos] != '\t')
+        {
+            word += line[pos];
+            pos++;
+        }
+
+        if(tokenCount == 0)
+        {
+            tokens[tokenCount].type = KEYWORD;
+        }
+        else if (tokenCount == 1)
+        {
+            tokens[tokenCount].type = IDENTIFIER;
+        }
+        else{
+            tokens[tokenCount].type = PARAM;
+        }
+
+        tokens[tokenCount].text = word; //  save the word
+        tokenCount++;
+    }
+    return tokenCount;
 }
-Snapshot *buildSnapshot(Stack<Frame> &callStack)
+
+string typeToString(TokenType t)
 {
-    // build the snapshot based on the callStack given
+    if( t == KEYWORD)
+    {
+        return "KEYWORD";
+    }
+    if ( t== IDENTIFIER)
+    {
+        return "IDENTIFIER";
+    }
+    return "PARAM";
+}
+
+Snapshot* buildSnapshot(Stack<Frame> &callStack)
+{
+    Snapshot * snap = new Snapshot();
+    snap->stackDepth = callStack.snapshot_into(snap->callStack, MAX_STACK_DEPTH);
+    return snap;
 }
 void executeProgram(const char *resolveBinPath, int64_t mainOffset, Timeline &timeline)
 {
