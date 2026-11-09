@@ -38,3 +38,11 @@ not being reset on `func_end`.
 - Implemented `tokenizeLine()` and `buildSnapshot()`.
 - Tested both in `test_tokenize.cpp` and `test_snapshot.cpp`. Results matched.
 - `executeProgram()` currently in progress.
+
+
+## 8th Nov 2026
+
+## Pass(0x2) - executeProgram in progress:
+- Added small helper functions to find, read and modify variables inside a frame.
+- Added `executeMath()` to run operations: `set`, `add`, `sub`, `mul` and `div`.
+- Tested in `test_math.cpp`. Output was as intended.

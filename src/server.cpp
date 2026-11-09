@@ -632,7 +632,7 @@ bool getVariable(Frame&f, const string& name, int32_t& outVal)
 }
 
 // change an exisitng var or create a new local. false returned on err
-bool setVariable(Frame&f, const string& name, int32_t& val)
+bool setVariable(Frame&f, const string& name, int32_t val)
 {
     int32_t idx  = findLocal(f, name);
     if(idx != -1)
@@ -710,7 +710,7 @@ bool executeMath(Frame& f, Token tokens[], int32_t tokenCount)
 {
     string keyword = tokens[0].text;
 
-    if(tokenCount < 0)
+    if(tokenCount < 3)
     {
         cout << "Error: " << keyword << " needs a variable and a value"<<endl;
         return false;
@@ -729,6 +729,8 @@ bool executeMath(Frame& f, Token tokens[], int32_t tokenCount)
     {
         return setVariable(f, target, operand);
     }
+
+
 
     int32_t current = 0;
 
@@ -769,15 +771,110 @@ bool executeMath(Frame& f, Token tokens[], int32_t tokenCount)
     return setVariable(f, target, result);
 }
 
+bool isMathKeyword(const string& keyword)
+{
+    if(keyword == "set" || keyword == "add" || keyword == "sub" || keyword == "mul" || keyword == "div")
+    {
+        return true;
+    }
+    return false;
+}
+
 void executeProgram(const char *resolveBinPath, int64_t mainOffset, Timeline &timeline)
 {
-    // initialize the call stack
-    // make the main frame
-    // push main frame on the call stack
+    // making stack and main frame
+    Stack<Frame> callStack;
+    Frame mainFrame;
+    initFrame(mainFrame, "main");
+    callStack.push(mainFrame);
 
-    // implementation:
-    // execute line by line, and according to the keyword perform action
+    //open file, put bookmark at main
+    FILE * f = fopen(resolveBinPath, "rb");
+    if(f == nullptr)
+    {
+        cout << "Error: could not open file "<< resolveBinPath << endl;
+        return;
+    }
+
+    fseek(f, mainOffset, SEEK_SET);
+
+    
+    string text;
+    readResolveRecord(f, text);
+
+    while(!callStack.isEmpty())
+    {
+        int64_t off = readResolveRecord(f, text);
+        if (off == -1)
+        {
+            cout << "Error: reached end of file before the program finished"<<endl;
+            break;
+        }
+
+        Token tokens[MAX_TOKENS];
+        int32_t n = tokenizeLine(text, tokens, MAX_TOKENS);
+        string keyword = tokens[0].text;
+
+        if(isMathKeyword(keyword))
+        {
+            if(!executeMath(callStack.peek(), tokens, n))
+            {
+                cout << "Execution stopped due to error."<<endl;
+                break;
+            }
+        }
+        else if(keyword == "func_end")
+        {
+            callStack.pop();
+        }
+        else
+        {
+            cout << "Error: instruction '" << keyword << "' is not defined"<<endl;
+            break;
+        }
+
+        Snapshot * snap = buildSnapshot(callStack);
+        timeline.record(snap);
+    }
+
+    fclose(f);
 }
+
+// priting every snapshot in timeline for debug purpose
+void printTimeline(Timeline & timeline)
+{
+    TimelineNode * curr = timeline.begin();
+    int32_t step = 1;
+
+    while(curr != nullptr)
+    {
+        Snapshot * snap = curr->data;
+        cout << "Step " << step << " / depth " << snap->stackDepth<<endl;
+
+        for(int32_t i =0; i <snap->stackDepth; i++)
+        {
+            Frame& frame = snap->callStack[i];
+            cout << "  " << frame.func_name << ": ";
+
+            for(int32_t a = 0; a <frame.argc; a++)
+            {
+                cout << frame.argv[a].name << "=" << frame.argv[a].value << " ";
+            }
+            for(int32_t j = 0; j < frame.localCount; j++)
+            {
+                cout << frame.locals[j].name << "=" << frame.locals[j].value << " ";
+            }
+
+            cout << endl;
+        }
+
+        curr = curr->next;
+        step++;
+    }
+
+    cout << "Total Steps: " << timeline.getStepCount() << endl;
+}
+
 
 // PASS 0x3: SERIALIZE TIMELINE
 void writeTdbg(Timeline &timeline, const char *tdbgPath)
@@ -799,9 +896,14 @@ int32_t main()
     }
 
     int64_t mainOffset = resolveProgram("source.bin", "resolve.bin");
+    if(mainOffset == -1)
+    {
+        return 1;
+    }
 
     Timeline timeline;
     executeProgram("resolve.bin", mainOffset, timeline);
+    printTimeline(timeline);
 
     writeTdbg(timeline, "session.tdbg");
 

@@ -1,0 +1,5 @@
+func main
+set a 20
+div a 0
+add a 1
+func_end
