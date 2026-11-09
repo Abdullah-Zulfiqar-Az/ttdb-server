@@ -46,3 +46,15 @@ not being reset on `func_end`.
 - Added small helper functions to find, read and modify variables inside a frame.
 - Added `executeMath()` to run operations: `set`, `add`, `sub`, `mul` and `div`.
 - Tested in `test_math.cpp`. Output was as intended.
+
+
+## 9th Nov 2026
+
+## Pass(0x2) - executeProgram completed:
+- Wrote the main loop for `executeProgram()`: it runs each line of `main` and takes a snapshot after every line.
+- Added `printTimeline()` for debugging and tested code with `mainonly.txt` and `stupidmath.txt`.
+- `call` and `func_end` resolution to be done next.
+
+## Pass(0x2) - executeProgram Updated:
+- Added `call` and `func_end` to `executeProgram()`: new frames, argument passing, return, and copying values back to the caller.
+- Tested with `valid.txt`, `nested.txt` and `wrongargs.txt`. Results matched.

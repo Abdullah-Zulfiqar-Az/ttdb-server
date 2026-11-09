@@ -780,6 +780,103 @@ bool isMathKeyword(const string& keyword)
     return false;
 }
 
+
+
+bool executeCall(FILE* f, Stack<Frame> & callStack, Token tokens[], int32_t n, int64_t targetOffset, int64_t callRecordStart)
+{
+    if(n < 2)
+    {
+        cout << "Error: call needs a function name"<<endl;
+        return false;
+    }
+
+    if(callStack.depth() >= MAX_STACK_DEPTH)
+    {
+        cout << "Error: stack overflow" << endl;
+        return false;
+    }
+
+    fseek(f, targetOffset, SEEK_SET);
+    string headerText;
+    readResolveRecord(f, headerText);
+
+    Token headerTokens[MAX_TOKENS];
+    int32_t hn = tokenizeLine(headerText, headerTokens, MAX_TOKENS);
+
+    if(hn < 2)
+    {
+        cout << "Error: function header is missing a name"<<endl;
+        return false;
+    }
+
+    // check if argument count and parameter count match
+    int32_t argCount = n -2; // words after 'call foo'
+    int32_t paramCount = hn -2; // words after 'func foo'
+
+    if(argCount != paramCount)
+    {
+        cout << "Error: function " << tokens[1].text << " expects " << paramCount << " arguments but got " << argCount << endl;
+        return false;
+    }
+
+    // building new frame
+    Frame newFrame;
+    initFrame(newFrame, tokens[1].text);
+    newFrame.returnLine = (int32_t)callRecordStart;   // bookmark
+    newFrame.argc = argCount;
+
+    Frame &caller = callStack.peek();
+    for (int32_t i = 0; i < argCount; i++)
+    {
+        int32_t value = 0;
+        if (!getOperandValue(caller, tokens[i + 2].text, value))
+        {
+            return false;
+        }
+        newFrame.argv[i].name = headerTokens[i + 2].text;
+        newFrame.argv[i].value = value;
+    }
+
+    callStack.push(newFrame);
+    return true;
+}
+
+// for 'func_end'
+bool executeReturn(FILE* f, Stack<Frame> & callStack)
+{
+    Frame finished = callStack.pop();
+
+    if(callStack.isEmpty())
+    {
+        return true;
+    }
+
+    // going back to call line(bookmark) and read it again
+    fseek(f, finished.returnLine, SEEK_SET);
+    string callText;
+    readResolveRecord(f, callText);
+
+    Token callTokens[MAX_TOKENS];
+    tokenizeLine(callText, callTokens, MAX_TOKENS);
+
+    // copying the changed values back into caller's version
+
+    Frame& caller = callStack.peek();
+    for(int32_t i =0; i < finished.argc; i++)
+    {
+        string passedName = callTokens[i + 2].text;
+        if (!isANumber(passedName))
+        {
+            if (!setVariable(caller, passedName, finished.argv[i].value))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 void executeProgram(const char *resolveBinPath, int64_t mainOffset, Timeline &timeline)
 {
     // making stack and main frame
@@ -804,6 +901,7 @@ void executeProgram(const char *resolveBinPath, int64_t mainOffset, Timeline &ti
 
     while(!callStack.isEmpty())
     {
+        int64_t recordStart= ftell(f);
         int64_t off = readResolveRecord(f, text);
         if (off == -1)
         {
@@ -823,9 +921,21 @@ void executeProgram(const char *resolveBinPath, int64_t mainOffset, Timeline &ti
                 break;
             }
         }
+          else if (keyword == "call")
+        {
+            if (!executeCall(f, callStack, tokens, n, off, recordStart))
+            {
+                cout << "Execution stopped due to error." << endl;
+                break;
+            }
+        }
         else if(keyword == "func_end")
         {
-            callStack.pop();
+            if(!executeReturn(f, callStack))
+            {
+                cout << "Execution stopped due to error."<<endl;
+                break;
+            }
         }
         else
         {

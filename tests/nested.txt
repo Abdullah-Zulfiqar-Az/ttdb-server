@@ -1,0 +1,14 @@
+func twice x
+mul x 2
+func_end
+
+func addten y
+add y 10
+call twice y
+func_end
+
+func main
+set n 5
+call addten n
+call twice n
+func_end
